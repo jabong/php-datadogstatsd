@@ -213,6 +213,7 @@ class Datadogstatsd {
      * @return null
      **/
     public static function event($title, $vals = array()) {
+       
         // Assemble the request
         $vals['title'] = $title;
         // Convert a comma-separated string of tags into an array
@@ -223,25 +224,24 @@ class Datadogstatsd {
                 $vals['tags'][] = trim($tag);
             }
         }
-
         $body = json_encode($vals); // Added in PHP 5.3.0
-
         // Get the url to POST to
         $url = static::$__datadogHost . static::$__eventUrl
              . '?api_key='            . static::$__apiKey
              . '&application_key='    . static::$__applicationKey;
 
-        // Set up the http request. Need the PECL pecl_http extension
-        $r = new HttpRequest($url, HttpRequest::METH_POST);
-        $r->addHeaders(array('Content-Type' => 'application/json'));
-        $r->setBody($body);
+        // Set up the http request. Need to install simple curl php extension
+        //sudo apt-get install curl libcurl3 libcurl3-dev php5-curl 
 
-        // Send, suppressing and logging any http errors
-        try {
-            $r->send();
-        } catch (HttpException $ex) {
-            error_log($ex);
-        }
+        $ch=curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($body))
+        );
+        $result = curl_exec($ch);
     }
 
 }
